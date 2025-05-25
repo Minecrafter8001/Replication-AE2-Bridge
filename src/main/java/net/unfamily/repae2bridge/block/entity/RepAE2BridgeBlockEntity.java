@@ -286,7 +286,22 @@ public class RepAE2BridgeBlockEntity extends ReplicationMachine<RepAE2BridgeBloc
     @Override
     public void onLoad() {
         // First initialize the Replication network (as done by the base class)
-        super.onLoad();
+        // Add safety check to prevent crash when network is not ready
+        try {
+            super.onLoad();
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Element network is null")) {
+                LOGGER.warn("Bridge: Replication network not ready during onLoad, will retry later. Error: {}", e.getMessage());
+                // Schedule a retry for the next tick
+                if (level != null && !level.isClientSide()) {
+                    level.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
+                }
+                return; // Exit early, don't initialize AE2 node yet
+            } else {
+                // Re-throw other exceptions
+                throw e;
+            }
+        }
         //LOGGER.info("Bridge: onLoad called at {}", worldPosition);
 
         // Initialize the AE2 node if it hasn't been done

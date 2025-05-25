@@ -218,4 +218,29 @@ public class RepAE2BridgeBl extends BasicTileBlock<RepAE2BridgeBlockEntity> impl
     public boolean canHarvestBlock(BlockState state, BlockGetter level, BlockPos pos, Player player) {
         return true;
     }
+
+    /**
+     * Handle scheduled ticks for retrying network initialization
+     */
+    @Override
+    public void tick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos, net.minecraft.util.RandomSource random) {
+        super.tick(state, level, pos, random);
+        
+        // Retry network initialization if it failed previously
+        if (level.getBlockEntity(pos) instanceof RepAE2BridgeBlockEntity blockEntity) {
+            try {
+                // Try to initialize the replication network again
+                blockEntity.onLoad();
+            } catch (RuntimeException e) {
+                if (e.getMessage() != null && e.getMessage().contains("Element network is null")) {
+                    // Still not ready, schedule another retry
+                    LOGGER.warn("Bridge: Replication network still not ready, scheduling another retry");
+                    level.scheduleTick(pos, this, 20); // Retry in 1 second
+                } else {
+                    // Different error, log it
+                    LOGGER.error("Bridge: Unexpected error during network retry: {}", e.getMessage());
+                }
+            }
+        }
+    }
 }
