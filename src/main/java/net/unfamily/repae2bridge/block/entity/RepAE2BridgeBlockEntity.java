@@ -725,7 +725,7 @@ public class RepAE2BridgeBlockEntity extends ReplicationMachine<RepAE2BridgeBloc
                                 //     amount, itemKey.getItem().getDescriptionId());
                                 
                                 // Extract all virtual matter to remove it
-                                storageService.getInventory().extract(itemKey, amount, Actionable.MODULATE, null);
+                                storageService.getInventory().extract(itemKey, amount, Actionable.MODULATE, new MachineSource(this));
                                 
                                 // LOGGER.info("Bridge: Removed {} virtual matter items {} from the network",
                                 //     amount, itemKey.getItem().getDescriptionId());
