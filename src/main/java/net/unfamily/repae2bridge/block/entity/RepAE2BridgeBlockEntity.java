@@ -389,7 +389,13 @@ public class RepAE2BridgeBlockEntity extends ReplicationMachine<RepAE2BridgeBloc
     @Override
     public void onLoad() {
         // First initialize the Replication network (as done by the base class)
-        super.onLoad();
+        try {
+            super.onLoad();
+        } catch (Exception e) {
+            LOGGER.error("Bridge: Error in super.onLoad(), will retry initialization: {}", e.getMessage());
+            // Schedule a retry for the next tick
+            shouldReconnect = true;
+        }
         //LOGGER.info("Bridge: onLoad called at {}", worldPosition);
         
         // Creiamo immediatamente il network Replication al posizionamento del blocco
@@ -412,29 +418,44 @@ public class RepAE2BridgeBlockEntity extends ReplicationMachine<RepAE2BridgeBloc
                             forceNeighborUpdates();
                         } else {
                             LOGGER.error("Bridge: Failed to create network element at placement time");
+                            // Schedule a retry for later
+                            shouldReconnect = true;
                         }
                     } else {
                         LOGGER.info("Bridge: Network element already exists for this block");
+                        // Verify that the element has a valid network
+                        if (element.getNetwork() == null) {
+                            LOGGER.warn("Bridge: Element exists but network is null, will retry initialization");
+                            shouldReconnect = true;
+                        }
                     }
                 } else {
-                    LOGGER.error("Bridge: NetworkManager not found at block placement time");
+                    LOGGER.error("Bridge: NetworkManager not found at block placement time, will retry");
+                    shouldReconnect = true;
                 }
             } catch (Exception e) {
-                LOGGER.error("Bridge: Error creating Replication network at placement time: {}", e.getMessage());
+                LOGGER.error("Bridge: Error creating Replication network at placement time: {}, will retry", e.getMessage());
+                // Schedule a retry for later
+                shouldReconnect = true;
             }
         }
         
         // Initialize the AE2 node using the safe method
         if (level != null && !level.isClientSide()) {
-            if (!nodeCreated || !isNodeValid()) {
-                LOGGER.debug("Bridge: Attempting safe node initialization in onLoad");
-                boolean success = safeInitializeNode();
-                if (!success) {
-                    shouldReconnect = true;
-                    LOGGER.warn("Bridge: Node initialization failed in onLoad, will retry later");
+            try {
+                if (!nodeCreated || !isNodeValid()) {
+                    LOGGER.debug("Bridge: Attempting safe node initialization in onLoad");
+                    boolean success = safeInitializeNode();
+                    if (!success) {
+                        shouldReconnect = true;
+                        LOGGER.warn("Bridge: Node initialization failed in onLoad, will retry later");
+                    }
+                } else {
+                    LOGGER.debug("Bridge: Node already valid in onLoad");
                 }
-            } else {
-                LOGGER.debug("Bridge: Node already valid in onLoad");
+            } catch (Exception e) {
+                LOGGER.error("Bridge: Error during AE2 node initialization in onLoad: {}, will retry", e.getMessage());
+                shouldReconnect = true;
             }
         }
     }
@@ -658,13 +679,34 @@ public class RepAE2BridgeBlockEntity extends ReplicationMachine<RepAE2BridgeBloc
         if (shouldReconnect && initialized == 1) {
             LOGGER.debug("Bridge: Attempting reconnection after world reload");
             
-            // Usa il metodo di utilità per la riconnessione sicura
-            boolean success = safeInitializeNode();
-            if (success) {
-                shouldReconnect = false;
-                LOGGER.info("Bridge: Successfully reconnected AE2 node after world reload");
-            } else {
-                LOGGER.warn("Bridge: Failed to reconnect AE2 node, will retry next tick");
+            try {
+                // First try to reconnect to the Replication network
+                NetworkManager networkManager = NetworkManager.get(level);
+                if (networkManager != null) {
+                    NetworkElement element = networkManager.getElement(worldPosition);
+                    if (element == null || element.getNetwork() == null) {
+                        LOGGER.debug("Bridge: Replication network element missing or invalid, recreating");
+                        if (element == null) {
+                            element = createElement(level, worldPosition);
+                            if (element != null) {
+                                networkManager.addElement(element);
+                                LOGGER.info("Bridge: Recreated Replication network element");
+                            }
+                        }
+                    }
+                }
+                
+                // Then try to reconnect the AE2 node
+                boolean success = safeInitializeNode();
+                if (success) {
+                    shouldReconnect = false;
+                    LOGGER.info("Bridge: Successfully reconnected both networks after world reload");
+                } else {
+                    LOGGER.warn("Bridge: Failed to reconnect AE2 node, will retry next tick");
+                    // shouldReconnect rimane true per tentare di nuovo al prossimo tick
+                }
+            } catch (Exception e) {
+                LOGGER.error("Bridge: Error during reconnection attempt: {}, will retry", e.getMessage());
                 // shouldReconnect rimane true per tentare di nuovo al prossimo tick
             }
         }
