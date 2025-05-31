@@ -24,7 +24,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
-//import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -46,6 +46,7 @@ import java.util.function.BiConsumer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.ModLoadingContext;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(RepAE2Bridge.MOD_ID)
@@ -81,11 +82,16 @@ public class RepAE2Bridge
         // Register all block entities
         ModBlockEntities.register(modEventBus);
         
-        // Register the commonSetup method for modloading
+        // Register the configuration
+        modEventBus.register(Config.class);
         modEventBus.addListener(this::commonSetup);
-
-        // Register the addCreative event handler for adding items to the creative menu
         modEventBus.addListener(this::addCreative);
+        
+        // Register config
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        
+        // Log the loaded configuration
+        LOGGER.info("RepAE2Bridge: Bridge energy consumption set to {} AE/t", Config.bridgeEnergyConsumption);
 
         // Register ourselves for server and other game events
         // Note: This is where the ServerStartingEvent and ServerStoppingEvent are registered
