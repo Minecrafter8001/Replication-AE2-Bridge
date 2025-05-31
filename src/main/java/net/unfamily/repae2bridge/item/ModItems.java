@@ -10,7 +10,13 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 
+import java.util.function.Supplier;
 
 /**
  * Base class for all virtual matter items.
@@ -31,43 +37,57 @@ class MatterItem extends Item {
     }
 }
 
-
+/**
+ * Registry handler for all items in the mod
+ */
 public class ModItems {
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, RepAE2Bridge.MOD_ID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, RepAE2Bridge.MOD_ID);
 
     // Earth Matter
-    public static final DeferredHolder<Item, Item> EARTH_MATTER = ITEMS.register("earth",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> EARTH_MATTER = ITEMS.register("earth", 
+        () -> new MatterItem(new Item.Properties()));
+    
     // Nether Matter
-    public static final DeferredHolder<Item, Item> NETHER_MATTER = ITEMS.register("nether",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> NETHER_MATTER = ITEMS.register("nether", 
+        () -> new MatterItem(new Item.Properties()));
+        
     // Organic Matter
-    public static final DeferredHolder<Item, Item> ORGANIC_MATTER = ITEMS.register("organic",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> ORGANIC_MATTER = ITEMS.register("organic", 
+        () -> new MatterItem(new Item.Properties()));
+        
     // Ender Matter
-    public static final DeferredHolder<Item, Item> ENDER_MATTER = ITEMS.register("ender",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> ENDER_MATTER = ITEMS.register("ender", 
+        () -> new MatterItem(new Item.Properties()));
+        
     // Metallic Matter
-    public static final DeferredHolder<Item, Item> METALLIC_MATTER = ITEMS.register("metallic",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> METALLIC_MATTER = ITEMS.register("metallic", 
+        () -> new MatterItem(new Item.Properties()));
+        
     // Precious Matter
-    public static final DeferredHolder<Item, Item> PRECIOUS_MATTER = ITEMS.register("precious",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> PRECIOUS_MATTER = ITEMS.register("precious", 
+        () -> new MatterItem(new Item.Properties()));
+        
     // Living Matter
-    public static final DeferredHolder<Item, Item> LIVING_MATTER = ITEMS.register("living",
-            () -> new MatterItem(new Item.Properties()));
-
+    public static final DeferredHolder<Item, Item> LIVING_MATTER = ITEMS.register("living", 
+        () -> new MatterItem(new Item.Properties()));
+        
     // Quantum Matter
-    public static final DeferredHolder<Item, Item> QUANTUM_MATTER = ITEMS.register("quantum",
-            () -> new QuantumMatterItem(new Item.Properties()));
+    public static final DeferredHolder<Item, Item> QUANTUM_MATTER = ITEMS.register("quantum", 
+        () -> new MatterItem(new Item.Properties()));
 
+    /**
+     * Register all items
+     * @param eventBus The mod event bus
+     */
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
+    }
+
+    /**
+     * Add items to creative tabs
+     * @param event The creative mode tab event
+     */
+    public static void addItemsToTabs(BuildCreativeModeTabContentsEvent event) {
+        // Non ci sono più item da aggiungere alle tab creative
     }
 }

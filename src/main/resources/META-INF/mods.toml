@@ -94,7 +94,7 @@ description='Bridge between Applied Energistics 2 and Replication mod'
 # Dipendenza da GuideME
 [[dependencies.rep_ae2_bridge]]
     modId="guideme"
-    mandatory=true
+    mandatory=false
     versionRange="[20.1.0,21.0.0)"  # Range di versioni per GuideME 1.20.1
     ordering="AFTER"
     side="BOTH"

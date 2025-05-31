@@ -18,7 +18,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
-//import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -69,9 +69,13 @@ public class RepAE2Bridge
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
+        
+        // Register the item to creative tabs
+        modEventBus.addListener(ModItems::addItemsToTabs);
 
-        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        //modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        // Register config
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        LOGGER.info("RepAE2Bridge: Config registered");
 
         // Register modules
         ModItems.register(modEventBus);
@@ -81,16 +85,6 @@ public class RepAE2Bridge
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
-        // Some common setup code
-        // LOGGER.info("HELLO FROM COMMON SETUP");
-
-        // if (Config.logDirtBlock)
-        //     LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-
-        // LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
-
-        // Config.items.forEach((item) -> LOGGER.info("ITEM >> {}", item.toString()));
-
         // Register the network element factory for the Replication mod
         // This is crucial for making the connection to the Replication network work
         event.enqueueWork(() -> {
@@ -123,6 +117,30 @@ public class RepAE2Bridge
             // This ensures it runs on the main thread
             registerWithReplicationMod();
         });
+        
+        // Check if GuideME is loaded
+        boolean guideMeLoaded = ModList.get().isLoaded("guideme");
+        if (guideMeLoaded) {
+            LOGGER.info("GuideME detected, guide system will be available");
+            // Register the guide association with RepAE2Bridge blocks
+            event.enqueueWork(() -> {
+                registerGuideAssociation();
+            });
+        } else {
+            LOGGER.info("GuideME not detected, guide system will not be available");
+        }
+
+        // Log the current energy consumption setting
+        LOGGER.info("RepAE2Bridge: Bridge energy consumption set to {} AE/t", Config.bridgeEnergyConsumption);
+    }
+    
+    /**
+     * Register the association between the guide and the blocks
+     */
+    private void registerGuideAssociation() {
+        LOGGER.info("Registering guide association for RepAE2Bridge");
+        // The guide extension is provided through assets/rep_ae2_bridge/ae2guide/ files
+        // following the approach used by ExtendedAE
     }
 
     // Register bridge capabilities
@@ -141,9 +159,6 @@ public class RepAE2Bridge
 
         // Registra le capabilities del bridge per il trasferimento di item
         RepAE2BridgeCapabilities.register(event);
-
-        // Log that capabilities have been registered
-        // LOGGER.info("AE2 Bridge capacities registered successfully");
     }
 
     // Add the example block item to the building blocks tab
@@ -152,7 +167,6 @@ public class RepAE2Bridge
         // Add the bridge to AE2's main creative tab
         if (event.getTabKey() == appeng.api.ids.AECreativeTabIds.MAIN) {
             event.accept(ModBlocks.REPAE2BRIDGE.get());
-            // LOGGER.info("Added RepAE2Bridge to AE2 creative tab");
         }
     }
 
@@ -160,7 +174,6 @@ public class RepAE2Bridge
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
-        // LOGGER.info("RepAE2Bridge: Server starting");
         RepAE2BridgeBlockEntity.setWorldUnloading(false);
     }
 
@@ -201,13 +214,9 @@ public class RepAE2Bridge
      * Register the mod namespace in the list of allowed namespaces for Replication cables
      */
     private void registerWithReplicationMod() {
-        // LOGGER.info("Registering RepAE2Bridge with Replication mod");
-
         // Add the mod namespace to the list of allowed namespaces
         MatterPipeBlock.ALLOWED_CONNECTION_BLOCKS.add(block ->
             block.getClass().getName().contains(MOD_ID)
         );
-
-        // LOGGER.info("Successfully registered with Replication mod");
     }
 }

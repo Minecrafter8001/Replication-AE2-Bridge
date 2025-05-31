@@ -63,6 +63,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.storage.IStorageService;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import appeng.me.helpers.MachineSource;
+import net.unfamily.repae2bridge.Config;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -152,6 +153,7 @@ public class RepAE2BridgeBlockEntity extends ReplicationMachine<RepAE2BridgeBloc
             .setVisualRepresentation(ModBlocks.REPAE2BRIDGE.get())
             .setInWorldNode(true)
             .setFlags(GridFlags.REQUIRE_CHANNEL)
+            .setIdlePowerUsage(Config.bridgeEnergyConsumption)  // Use the energy consumption from config
             .setExposedOnSides(EnumSet.allOf(Direction.class))
             .addService(ICraftingProvider.class, this)
             .addService(IStorageProvider.class, this)
